@@ -1,0 +1,63 @@
+module detected_test(ds,setd,clk,clrn,dc,c);
+ input ds,clk,clrn; 
+ input [7:0] setd;
+ output [3:0] c;  
+ output  dc;
+ reg [3:0]c;
+ reg dc;
+
+parameter s0=0,
+s1=1,s2=2,s3=3,s4=4,s5=5,s6=6,s7=7,s8=8;
+ always@(posedge clk or negedge clrn)
+ begin
+    if(~clrn)
+    begin
+        dc<=1'b0;
+        c <= s0;
+    end
+    else
+    begin
+        case(c)
+        s0: if(ds == setd[7])
+                c <= s1;
+            
+        s1: if(ds == setd[6])
+                c <= s2;
+            else
+                c <= s0;
+        s2: if(ds == setd[5])
+                c <= s3;
+            else
+                c <= s0;
+        s3: if(ds == setd[4])
+                c <= s4;
+            else
+                c <= s0;
+        s4: if(ds == setd[3])
+                c <= s5;
+            else
+                c <= s0;
+        s5: if(ds == setd[2])
+                c <= s6;
+            else
+                c <= s0;
+        s6: if(ds == setd[1])
+                c <= s7;
+            else
+                c <= s0;
+        s7: if(ds == setd[0])
+            begin
+                c <= s8;
+                dc <= 1'b1;
+            end
+            else
+                c <= s0;
+        s8: begin 
+                c <=s0;
+                dc <= 1'b0;
+            end 
+        default: c<=s0;
+        endcase
+    end
+ end
+endmodule

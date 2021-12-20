@@ -1,0 +1,26 @@
+ module regfile(rna,rnb,d,wn,we,clk,clrn,qa,qb);
+  input [4:0] rna,rnb,wn;
+  input [31:0] d;
+  input we,clk,clrn;
+  output [31:0] qa,qb;
+  reg [31:0] rf [31:0] ;
+  integer i;
+  always@(posedge clk or negedge clrn)
+  begin
+     if (~clrn)
+     begin
+     for (i=0;i<32;i=i+1)
+        rf[i] <= 32'b0;
+     end
+     else
+    begin
+    if (we & wn!=5'b0)
+        begin
+        rf[wn]<=d;
+        end
+    end
+
+  end
+  assign qa = (rna==5'b0) ?32'b0:rf[rna];
+  assign qb = (rnb==5'b0) ?32'b0:rf[rnb];
+endmodule

@@ -1,0 +1,89 @@
+ module alu(a,b,aluc,r,z);
+	input [31:0] a,b;
+	input [3:0] aluc;
+	output [31:0] r;
+	output z;
+	reg [31:0] r;
+	reg z;
+	reg [31:0]temp;
+	shift_mux rshift(b,a[4:0],1'b1,1'b1,temp);
+	always@(a or b or aluc)
+	begin
+	casex(aluc)
+	4'bx000:begin
+			r = a[31:0] + b[31:0]; //r = a + b;
+			z = (r == 32'b0)?1:0;
+			end
+	4'bx001: r = a & b;
+	4'bx010: r = a ^ b;
+	4'bx100:begin
+				r = a + ~b+1;
+				z = (r == 32'b0)?1:0;
+			end
+	4'bx101: r = a | b;
+	4'bx110: r = {b[15:0],{16{1'b0}}};
+	4'bx011:begin
+			 r = b<<a[4:0];
+			end
+	4'b0111: r= b >> a[4:0];
+	4'b1111: r = temp;
+	default: r = 32'b0;
+			 
+	endcase
+    z = (r == 32'b0)?1:0;
+	end
+endmodule
+module shift_mux (d,sa,right,arith,sh);
+	input [31:0]  d;  //待移位的数据
+	input [4:0]   sa; //移位的数量
+	input       right,arith; //是否右移、是否算数右移
+	output [31:0] sh; //输出
+	wire [31:0] t0,t1,t2,t3,t4,s1,s2,s3,s4;
+	wire a=d[31] & arith;//符号位
+	wire [15:0] e= {16{a}};
+	parameter   z=16'b0;
+	wire [31:0] sdl4,sdr4,sdl3,sdr3,sdl2,sdr2,sdl1,sdr1,sdl0,sdr0;
+
+
+	assign      sdl4={d[15:0],z}; //左移16位的结果 
+	assign      sdr4={e,d[31:16]};//右移16位的结果 
+	mux2x32 m_right4(sdl4,sdr4,right,t4); //如果是右移，t4 = 右移16位的结果；如果是左移，t4 = 左移16位的结果
+	mux2x32 m_shift4 (d,t4,sa[4],s4); //not_shift or shift 如果移位的数量>=16,s4 = 移位16位后得结果，否则s4 = 原数据
+	// 到这里为止处理完了sa[4]的问题，得到的结果为s4
+
+
+	assign      sdl3={s4[23:0],z[7:0]};// shift left 8-bit
+	assign      sdr3={e[7:0],s4[31:8]}; //shift right 8-bit
+	mux2x32 m_right3 (sdl3,sdr3,right,t3);//left or right
+	mux2x32 m_shift3 (s4,t3,sa[3],s3);//not shift or shift
+	// 到这里为止处理完了sa[3]的问题，得到的结果为s3
+
+
+	assign      sdl2={s3[27:0],z[3:0]}; //shift left 4-bit
+	assign 		sdr2 = {e[3:0],s3[31:4]};
+	mux2x32 m_right2 (sdl2,sdr2,right,t2); //left or right
+	mux2x32 m_shift2 (s3,t2,sa[2],s2);  //not_shift or shift
+	// 到这里为止处理完了sa[2]的问题，得到的结果为s2
+
+	assign      sdl1={s2[29:0],z[1:0]}; //shift left 2-bit
+	assign      sdr1={e[1:0],s2[31:2]};//shift right 2-bit
+	mux2x32 m_right1 (sdl1,sdr1,right,t1);//left or right
+	mux2x32 m_shift1(s2,t1,sa[1],s1);
+	// 到这里为止处理完了sa[1]的问题，得到的结果为s1
+
+
+	assign      sdl0={s1[30:0],z[0]};  //shift left 1-bit
+	assign      sdr0={e[0],s1[31:1]};  //shift right 1-bith
+	mux2x32 m_right0 (sdl0,sdr0,right,t0); //left or right
+	mux2x32 m_shift0 (s1,t0,sa[0],sh); //not_shift or shift
+	// 到这里为止处理完了sa[0]的问题，得到的结果为sh
+endmodule
+module mux2x32(a0,a1,s,y);
+    input [31:0] a0,a1;
+    input   s;
+    output [31:0] y;
+    // 请在下面添加代码，实现当选择信号S为1时选中a1的所有32位，为0时选中a0;
+        /********** Begin *********/
+	assign y = s?a1:a0;
+        /********** End *********/
+endmodule
